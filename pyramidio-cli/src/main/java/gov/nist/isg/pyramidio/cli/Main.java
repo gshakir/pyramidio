@@ -66,9 +66,11 @@ public class Main {
         parallelismOption.setType(PatternOptionBuilder.NUMBER_VALUE);
         options.addOption(parallelismOption);
 
+        /*
         Option tarOption = new Option("tar",
                 "If specified, the pyramid is generated in a tar file.");
         options.addOption(tarOption);
+        */
 
         Option helpOption = new Option("h", "help", false,
                 "Display this help message and exit.");
@@ -88,8 +90,7 @@ public class Main {
             String inputFileBaseName = FilenameUtils.getBaseName(
                     inputFile.getName());
 
-            File outputFolder = new File(
-                    commandLine.getOptionValue(outputOption.getOpt()));
+            String outputFolder = commandLine.getOptionValue(outputOption.getOpt());
 
             Number tileSizeNumber = (Number) commandLine.getParsedOptionValue(
                     tileSizeOption.getOpt());
@@ -112,6 +113,7 @@ public class Main {
             int parallelism = parallelismNumber == null
                     ? 1 : parallelismNumber.intValue();
 
+            /*
             boolean tar = commandLine.hasOption(tarOption.getOpt());
             if (tar) {
                 if (outputFolder.exists()) {
@@ -140,6 +142,7 @@ public class Main {
                     return;
                 }
             }
+            */
 
             ScalablePyramidBuilder spb = new ScalablePyramidBuilder(
                     tileSize, tileOverlap, tileFormat, "dzi");
@@ -147,9 +150,7 @@ public class Main {
             try {
                 long start = System.currentTimeMillis();
 
-                try (FilesArchiver archiver = tar
-                        ? new TarArchiver(outputFolder)
-                        : new DirectoryArchiver(outputFolder)) {
+                try (FilesArchiver archiver = FilesArchiverFactory.makeFilesArchiver(outputFolder)) {
                     spb.buildPyramid(
                             new BufferedImageReader(inputFile),
                             inputFileBaseName,
