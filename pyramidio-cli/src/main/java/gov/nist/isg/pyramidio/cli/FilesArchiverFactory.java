@@ -12,6 +12,7 @@
 package gov.nist.isg.pyramidio.cli;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 
@@ -28,8 +29,12 @@ import gov.nist.isg.archiver.TarOnHdfsArchiver;
 import gov.nist.isg.archiver.SequenceFileArchiver;
 import gov.nist.isg.archiver.S3Archiver;
 
+import java.util.logging.Logger;
+
 public class FilesArchiverFactory {
 
+    private static final Logger logger = Logger.getLogger(
+            FilesArchiverFactory.class.getName());
 
     private static final String S3_SCHEME = "s3";
     private static final String FILE_SCHEME = "file";
@@ -45,7 +50,7 @@ public class FilesArchiverFactory {
 
         try {
             URI outputURI = new URI(outputFolder);
-            System.out.println("Got scheme " + outputURI.getScheme() + " for folder " + outputFolder);
+            logger.info("Got scheme " + outputURI.getScheme() + " for folder " + outputFolder);
 
             if (outputURI.getScheme() == null ||
                 outputURI.getScheme().equalsIgnoreCase(FILE_SCHEME) ||
@@ -68,19 +73,26 @@ public class FilesArchiverFactory {
     }
 
     private static FilesArchiver makeDirectoryArchiver(String outputFolder, URI outputURI) throws Exception {
-        String extension = FilenameUtils.getExtension(outputFolder);
-        FilesArchiver archiver = null;
-        if (extension.contains(TAR_EXTENSION)) {
-            archiver =  new TarArchiver(new File(outputURI.getPath()));
+        File outputFile = null;
+        if (outputURI.getScheme() == null ||
+                outputURI.getScheme().equalsIgnoreCase(EMPTY_STRING)) { 
+            outputFile = new File(outputFolder);
         }
         else {
-            if (outputURI.getScheme() == null ||
-                    outputURI.getScheme().equalsIgnoreCase(EMPTY_STRING)) { 
-                archiver = new DirectoryArchiver(new File(outputFolder));
+            outputFile = new File(outputURI);
+        }
+
+        String extension = FilenameUtils.getExtension(outputFolder);
+        FilesArchiver archiver = null;
+        logger.info("Making directory archiver for " + outputFolder + " uri: " + outputURI + " extension: '" + extension + "'");
+        if (extension.contains(TAR_EXTENSION)) {
+            if (outputFile.exists()) {
+                throw new IOException("The path '" + outputFile + "' already exists.");
             }
-            else {
-                archiver = new DirectoryArchiver(new File(outputURI));
-            }
+            archiver =  new TarArchiver(outputFile);
+        }
+        else {
+            archiver = new DirectoryArchiver(outputFile);
         }
         return archiver;
     }

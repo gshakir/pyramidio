@@ -43,7 +43,7 @@ public class S3Archiver implements FilesArchiver {
         AmazonS3Client client = new AmazonS3Client();
         ObjectListing listing = client.listObjects(bucket, prefix);
         if (!listing.getObjectSummaries().isEmpty()) {
-            //throw new IllegalStateException("The bucket path exists: " + bucket + "/" + prefix);
+            throw new IllegalStateException("The bucket path exists: " + bucket + "/" + prefix);
         }
     }
 
@@ -56,23 +56,8 @@ public class S3Archiver implements FilesArchiver {
         AmazonS3Client client = new AmazonS3Client();
         ObjectMetadata metadata = new ObjectMetadata();
         metadata.setContentLength(out.size());
-        PutObjectResult putResult = client.putObject(bucket, s3key, new ByteArrayInputStream(out.toByteArray()), metadata);
-        System.out.println("Done Put for s3Key: " + s3key);
-        System.out.println("Done Put Result: " + putResult.getContentMd5());
+        client.putObject(bucket, s3key, new ByteArrayInputStream(out.toByteArray()), metadata);
         return result;
-
-        /*
-        PipedInputStream in = new PipedInputStream(1024 * 100);
-        PipedOutputStream out = new PipedOutputStream(in);
-        T result = appender.append(out);
-        AmazonS3Client client = new AmazonS3Client();
-        PutObjectResult putResult = client.putObject(bucket, s3key, in, new ObjectMetadata());
-        System.out.println("Put Result: " + putResult.getContentMd5());
-        out.close();
-        in.close();
-        System.out.println("Done Put Result: " + putResult.getContentMd5());
-        return result;
-        */
     }
 
     @Override
@@ -83,17 +68,11 @@ public class S3Archiver implements FilesArchiver {
 
     @Override
     public void appendFile(String path, File file) throws IOException {
-        /*
-        try (final FileInputStream fis = new FileInputStream(file)) {
-            appendFile(path, new FileAppender<Void>() {
-                @Override
-                public Void append(OutputStream outputStream) throws IOException {
-                    IOUtils.copy(fis, outputStream);
-                    return null;
-                }
-            });
-        }
-        */
+        final String s3key = prefix + "/" + path;
+        AmazonS3Client client = new AmazonS3Client();
+        ObjectMetadata metadata = new ObjectMetadata();
+        metadata.setContentLength(file.length());
+        client.putObject(bucket, s3key, new FileInputStream(file), metadata);
     }
 
     @Override

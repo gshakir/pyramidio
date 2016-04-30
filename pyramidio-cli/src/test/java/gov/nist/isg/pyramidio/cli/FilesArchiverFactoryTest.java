@@ -11,8 +11,12 @@
  */
 package gov.nist.isg.pyramidio.cli;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import static org.junit.Assert.*;
+
+import java.io.File;
+import java.net.URI;
 
 import gov.nist.isg.archiver.DirectoryArchiver;
 import gov.nist.isg.archiver.FilesArchiver;
@@ -20,13 +24,30 @@ import gov.nist.isg.archiver.TarArchiver;
 import gov.nist.isg.archiver.HdfsArchiver;
 import gov.nist.isg.archiver.TarOnHdfsArchiver;
 
+import java.util.logging.Logger;
+
 public class FilesArchiverFactoryTest {
+    private static final Logger logger = Logger.getLogger(
+            FilesArchiverFactoryTest.class.getName());
 
     @Test
     public void testNoScheme() throws Exception {
-        FilesArchiver archiver = FilesArchiverFactory.makeFilesArchiver("testfolder");
-        assertEquals(archiver.getClass().toString() , DirectoryArchiver.class.toString());
+        String filePath = "testfolder";
+        File file = new File(filePath);
+        file.delete();
+        FilesArchiver archiver = FilesArchiverFactory.makeFilesArchiver(filePath);
         assertEquals(archiver.getClass(), DirectoryArchiver.class);
+        file.delete();
+    }
+
+    @Test
+    public void testNoTarScheme() throws Exception {
+        String tarFilePath = "testfolder.tar";
+        File tarFile = new File(tarFilePath);
+        tarFile.delete();
+        FilesArchiver archiver = FilesArchiverFactory.makeFilesArchiver(tarFilePath);
+        assertEquals(archiver.getClass(), TarArchiver.class);
+        tarFile.delete();
     }
 
     @Test
@@ -38,17 +59,23 @@ public class FilesArchiverFactoryTest {
 
     @Test
     public void testFileTarScheme() throws Exception {
-        FilesArchiver archiver = FilesArchiverFactory.makeFilesArchiver("file:///tmp/testfolder.tar");
+        String tarFilePath = "file:///tmp/testfolder.tar";
+        File tarFile = new File(new URI(tarFilePath));
+        boolean deleted = tarFile.delete();
+        FilesArchiver archiver = FilesArchiverFactory.makeFilesArchiver(tarFilePath);
         assertEquals(archiver.getClass(), TarArchiver.class);
+        tarFile.delete();
     }
 
     @Test
+    @Ignore
     public void testHdfsScheme() throws Exception {
         FilesArchiver archiver = FilesArchiverFactory.makeFilesArchiver("hdfs://localhost:9000/testfolder");
         assertEquals(archiver.getClass(), HdfsArchiver.class);
     }
 
     @Test
+    @Ignore
     public void testHdfsTarScheme() throws Exception {
         FilesArchiver archiver = FilesArchiverFactory.makeFilesArchiver("hdfs://localhost:9000/testfolder.tar");
         assertEquals(archiver.getClass(), TarOnHdfsArchiver.class);

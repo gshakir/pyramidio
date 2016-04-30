@@ -22,9 +22,5 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
-/**
- *
- * @author antoinev
- */
 public class S3ArchiverTest {
 }
